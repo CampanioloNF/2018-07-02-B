@@ -6,7 +6,10 @@ package it.polito.tdp.extflightdelays;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Set;
 
+import it.polito.tdp.extflightdelays.model.Airport;
+import it.polito.tdp.extflightdelays.model.AirportDuration;
 import it.polito.tdp.extflightdelays.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -35,7 +38,7 @@ public class ExtFlightDelaysController {
     private Button btnAnalizza; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbBoxAeroportoPartenza"
-    private ComboBox<?> cmbBoxAeroportoPartenza; // Value injected by FXMLLoader
+    private ComboBox<Airport> cmbBoxAeroportoPartenza; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnAeroportiConnessi"
     private Button btnAeroportiConnessi; // Value injected by FXMLLoader
@@ -46,19 +49,73 @@ public class ExtFlightDelaysController {
     @FXML // fx:id="btnOttimizza"
     private Button btnOttimizza; // Value injected by FXMLLoader
 
+    private int numMin = 0; 
+    private int numMax = 0;
+    
     @FXML
     void doAnalizzaAeroporti(ActionEvent event) {
 
+    	txtResult.clear();
+    	
+    	try {
+    		
+    		numMin = Integer.parseInt(voliMinimo.getText());
+    		model.creaGrafo(numMin);
+    		cmbBoxAeroportoPartenza.getItems().addAll(model.listaVertici());
+    		
+    	}catch(NumberFormatException nfe) {
+    		txtResult.appendText("Si prega di inserire un valore intero come numero di ore minimo");
+    		return;
+    	}
+    	
     }
 
     @FXML
     void doCalcolaAeroportiConnessi(ActionEvent event) {
-
+    	
+    	txtResult.clear();
+    	
+    	Airport scelto = cmbBoxAeroportoPartenza.getValue();
+    	if(scelto!=null) {
+    		  txtResult.appendText("Dall'aereoporto scelto è possibile raggiungere: \n");
+    		for(AirportDuration ad : model.listaVicini(scelto)) 
+    			txtResult.appendText(ad.getVicino()+" con durata media "+(double)Math.round(ad.getAvgDurata()*100)/100+"\n");
+    		
+    		
+    	}else
+    		txtResult.appendText("Si prega di scegliere un aereoporto");
+    	
     }
 
     @FXML
     void doCercaItinerario(ActionEvent event) {
 
+    	txtResult.clear();	
+    	try {
+    		
+    		numMax = Integer.parseInt(numeroOreTxtInput.getText());
+    		
+    		Airport scelto = cmbBoxAeroportoPartenza.getValue();
+        	if(scelto!=null) {
+        		 
+        		txtResult.appendText("Il cammino ottimo dall'aereporto scelto è: \n\n");
+        		  
+        		  Set<AirportDuration> ris =  model.camminoOttimo(numMax, scelto);
+        		for(AirportDuration ad : ris) 
+        			txtResult.appendText(ad.getVicino()+" con durata media "+(double)Math.round(ad.getAvgDurata()*200)/100+"\n");
+        		txtResult.appendText("\n Il cammino ottimo dall'aereporto scelto è formato da : "+ris.size()+" aereoporti."
+        				+ "\n E prevede "+(double)Math.round(model.calcolaPeso(ris)*1000)/1000+" ore di viaggio.");
+        		
+        	}else
+        		txtResult.appendText("Si prega di scegliere un aereoporto");
+    		
+    	}catch(NumberFormatException nfe) {
+    		txtResult.appendText("Si prega di inserire un valore intero come numero di ore massimo");
+    		return;
+    	}
+    	
+    	
+  	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete

@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import it.polito.tdp.extflightdelays.model.Airline;
 import it.polito.tdp.extflightdelays.model.Airport;
@@ -37,24 +38,30 @@ public class ExtFlightDelaysDAO {
 		}
 	}
 
-	public List<Airport> loadAllAirports() {
+	public void loadAllAirports(Map<Integer, Airport> idAirportMap) {
 		String sql = "SELECT * FROM airports";
-		List<Airport> result = new ArrayList<Airport>();
-
+	
 		try {
 			Connection conn = ConnectDB.getConnection();
 			PreparedStatement st = conn.prepareStatement(sql);
 			ResultSet rs = st.executeQuery();
 
 			while (rs.next()) {
+				
+				if(!idAirportMap.containsKey(rs.getInt("ID"))) {
+				
+					
 				Airport airport = new Airport(rs.getInt("ID"), rs.getString("IATA_CODE"), rs.getString("AIRPORT"),
 						rs.getString("CITY"), rs.getString("STATE"), rs.getString("COUNTRY"), rs.getDouble("LATITUDE"),
 						rs.getDouble("LONGITUDE"), rs.getDouble("TIMEZONE_OFFSET"));
-				result.add(airport);
+				
+				idAirportMap.put(airport.getId(), airport);
+				
 			}
+		}
 
 			conn.close();
-			return result;
+			
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -63,7 +70,7 @@ public class ExtFlightDelaysDAO {
 		}
 	}
 
-	public List<Flight> loadAllFlights() {
+	public List<Flight> loadAllFlights(Map<Integer, Airport> idAirportMap) {
 		String sql = "SELECT * FROM flights";
 		List<Flight> result = new LinkedList<Flight>();
 
@@ -73,6 +80,9 @@ public class ExtFlightDelaysDAO {
 			ResultSet rs = st.executeQuery();
 
 			while (rs.next()) {
+				
+				if(idAirportMap.containsKey(rs.getInt("ORIGIN_AIRPORT_ID")) && idAirportMap.containsKey(rs.getInt("DESTINATION_AIRPORT_ID"))) {
+				
 				Flight flight = new Flight(rs.getInt("ID"), rs.getInt("AIRLINE_ID"), rs.getInt("FLIGHT_NUMBER"),
 						rs.getString("TAIL_NUMBER"), rs.getInt("ORIGIN_AIRPORT_ID"),
 						rs.getInt("DESTINATION_AIRPORT_ID"),
@@ -81,7 +91,7 @@ public class ExtFlightDelaysDAO {
 						rs.getTimestamp("ARRIVAL_DATE").toLocalDateTime(), rs.getDouble("ARRIVAL_DELAY"));
 				result.add(flight);
 			}
-
+		}
 			conn.close();
 			return result;
 
